@@ -1,16 +1,37 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import Column from './Column'
 
 import { Grid } from '@material-ui/core'
 import { DragDropContext } from 'react-beautiful-dnd'
 
 import _ from 'lodash'
-
-import _tasks from '../../mock-data/tasks.json'
-import _taskStats from '../../mock-data/task-stats.json'
+import { updateTaskStatusId } from '../../../../apis/tasks'
 
 const DnD = props => {
-  let [data, setData] = useState(_data)
+  const { tasks, taskStatuses, onUpdateTaskStatus } = props
+
+  let [data, setData] = useState(null)
+
+  useEffect(() => {
+    setData({
+      tasks,
+      columns: _.reduce(
+        taskStatuses,
+        (acc, cur) => ({
+          ...acc,
+          [cur._id]: {
+            ...cur,
+            taskIds: _.filter(
+              tasks,
+              ({ statusId }) => statusId === cur._id
+            ).map(({ _id }) => _id)
+          }
+        }),
+        {}
+      ),
+      columnOrder: _.map(taskStatuses, ({ _id }) => _id)
+    })
+  }, [tasks, taskStatuses])
 
   const onDragEnd = result => {
     const { destination, source, draggableId } = result
@@ -22,6 +43,9 @@ const DnD = props => {
     if (source.droppableId === destination.droppableId) {
       return
     }
+
+    // Make API Request
+    updateTaskStatusId(draggableId, destination.droppableId)
 
     // Get source and destination columns
     let sourceColumn = data.columns[source.droppableId]
@@ -57,7 +81,10 @@ const DnD = props => {
     }
 
     setData(newData)
+    onUpdateTaskStatus(draggableId, destination.droppableId)
   }
+
+  if (data == null) return null
 
   return (
     <Grid container spacing={16}>
@@ -68,30 +95,18 @@ const DnD = props => {
 
           return (
             <Grid item xs={8} md={4}>
-              <Column key={column.id} column={column} tasks={tasks} openTaskDetail={props.openTaskDetail} />
+              <Column
+                key={column.id}
+                column={column}
+                tasks={tasks}
+                openTaskDetail={props.openTaskDetail}
+              />
             </Grid>
           )
         })}
       </DragDropContext>
     </Grid>
   )
-}
-
-const _data = {
-  tasks: _.mapKeys(_tasks, '_id'),
-  columns: _taskStats.reduce(
-    (acc, cur) => ({
-      ...acc,
-      [cur._id]: {
-        ...cur,
-        taskIds: _tasks
-          .filter(({ statusId }) => statusId === cur._id)
-          .map(({ _id }) => _id)
-      }
-    }),
-    {}
-  ),
-  columnOrder: _taskStats.map(({ _id }) => _id)
 }
 
 export default DnD

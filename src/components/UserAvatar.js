@@ -5,6 +5,8 @@ import ColorHash from 'color-hash'
 const colorHash = new ColorHash()
 
 const UserAvatar = props => {
+  if (!props.user) return null
+
   const { _id, name } = props.user
 
   if (!_id || !name) return null

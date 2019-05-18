@@ -1,13 +1,15 @@
 import React from 'react'
 import { Card, Typography, Tooltip, Avatar } from '@material-ui/core'
 import { Draggable } from 'react-beautiful-dnd'
-import UserAvatar from '../UserAvatar'
+import UserAvatar from '../../../UserAvatar'
 import moment from 'moment'
 
 const Task = props => {
   const { task, index, onClick } = props
 
   const renderUsers = users => {
+    if (!users) return null
+
     let others = []
 
     const avatars = users.map((user, index) => {
@@ -22,6 +24,7 @@ const Task = props => {
     return (
       <div style={{ display: 'flex', flexDirection: 'row', justifyContent: 'flex-end' }}>
         {avatars}
+        
         {others.length !== 0 && (
           <Tooltip title={others.join(', ')}>
             <Avatar style={{ height: '30px', width: '30px', fontSize: 14 }}>
@@ -42,19 +45,19 @@ const Task = props => {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
         >
-          <Card style={{ cursor: 'pointer', marginTop: '8px' }} onClick={() => onClick()}>
+          <Card style={{ cursor: 'pointer', marginTop: '8px' }} onClick={() => onClick(task._id)}>
             <div style={{padding: '8px'}}>
-              <Typography>{task.title}</Typography>
+              <Typography>{task.name}</Typography>
               <Typography>{task.detail}</Typography>
             
 
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
                 <div>
-                  <Typography>{moment(task.deadline).format('D MMM')}</Typography>
+                  <Typography>{moment(task.endDate).format('D MMM')}</Typography>
                   <Typography variant="caption">Teslim Tarihi</Typography>
                 </div>
 
-                {renderUsers(task.users)}
+                {renderUsers(task.assignees)}
               </div>
 
             </div>

@@ -9,7 +9,7 @@ const Column = props => {
 
   return (
     <Card style={{ backgroundColor: '#e5e5e5', padding: '8px' }}>
-      <Typography>{column.title}</Typography>
+      <Typography>{column.name}</Typography>
 
       <Droppable droppableId={column._id}>
         {provided => (

@@ -6,9 +6,9 @@ const TaskFormDialog = props => {
   const { open, handleClose, formProps } = props
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={() => handleClose()} fullWidth maxWidth="md">
       <DialogTitle>
-        {formProps.mode === 'create' ? 'Yeni Görev Oluştur' : 'Görevi Düzenle'}
+        {formProps.mode === 'create' ? 'Görev Oluştur' : 'Görevi Düzenle'}
       </DialogTitle>
       <DialogContent>
         <TaskForm {...formProps} handleClose={handleClose} />

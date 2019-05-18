@@ -15,13 +15,24 @@ import {
   ListItemIcon,
   ListItemText,
   Toolbar,
-  Typography
+  Typography,
+  Tooltip
 } from '@material-ui/core'
 import { withStyles } from '@material-ui/core/styles'
-import { Menu as MenuIcon, ExitToApp as LogoutIcon } from '@material-ui/icons'
+import {
+  Menu as MenuIcon,
+  ExitToApp as LogoutIcon,
+  Add as AddIcon
+} from '@material-ui/icons'
 
-import { Link } from 'react-router-dom'
+import { Link, Redirect } from 'react-router-dom'
 import UserAvatar from './UserAvatar'
+
+import _projects from '../mock-data/projects.json'
+import ProjectFormDialog from './project-form/ProjectFormDialog'
+
+import { getProjects } from '../apis/projects'
+import { user, setUser, setToken } from '../globals'
 
 const drawerWidth = 240
 const title = 'ITIL Project'
@@ -60,34 +71,40 @@ const styles = theme => ({
 
 class ResponsiveDrawer extends React.Component {
   state = {
-    mobileOpen: false
+    goLogin: false,
+    mobileOpen: false,
+    projectDialogOpen: false,
+    projects: []
   }
 
-  projects = [
-    {
-      _id: '1234',
-      name: 'ITIL Projesi'
-    },
-    {
-      _id: '4545',
-      name: 'Project: Mars'
-    },
-    {
-      _id: '4321',
-      name: 'Çaylar!!! Mobile App'
-    }
-  ]
-
-  user = {
-    _id: '1234',
-    name: 'Çağatay Çiftçi'
+  componentDidMount() {
+    getProjects()
+      .then(projects => this.setState({ projects }))
+      .catch(console.log)
   }
 
   handleDrawerToggle = () => {
     this.setState(state => ({ mobileOpen: !state.mobileOpen }))
   }
 
+  onCreateProject = project => {
+    let newState = { projectDialogOpen: false }
+
+    if (project) newState.projects = [...this.state.projects, project]
+
+    this.setState(newState)
+  }
+
+  onClickLogout = () => {
+    setUser({ _id: '', name: '' })
+    setToken('')
+
+    this.setState({ goLogin: true })
+  }
+
   render() {
+    if (this.state.goLogin) return <Redirect to="/" />
+
     const { classes, theme, routes, children } = this.props
 
     const drawer = (
@@ -98,19 +115,19 @@ class ResponsiveDrawer extends React.Component {
         <List>
           <ListItem>
             <ListItemAvatar>
-              <UserAvatar user={this.user} />
+              <UserAvatar user={user} />
             </ListItemAvatar>
 
-            <ListItemText primary={this.user.name} />
+            <ListItemText primary={user && user.name} />
 
             <ListItemSecondaryAction>
-              <IconButton>
+              <IconButton onClick={this.onClickLogout}>
                 <LogoutIcon />
               </IconButton>
             </ListItemSecondaryAction>
           </ListItem>
         </List>
-        
+
         <Divider />
 
         <List>
@@ -126,8 +143,30 @@ class ResponsiveDrawer extends React.Component {
 
         <Divider />
 
-        <List subheader={<ListSubheader>Projeler</ListSubheader>}>
-          {this.projects.map(({ _id, name }) => (
+        <List
+          subheader={
+            <ListSubheader>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center'
+                }}
+              >
+                <Typography variant="subtitle2">Projeler</Typography>
+
+                <Tooltip title="Yeni Proje Oluştur">
+                  <IconButton
+                    onClick={() => this.setState({ projectDialogOpen: true })}
+                  >
+                    <AddIcon />
+                  </IconButton>
+                </Tooltip>
+              </div>
+            </ListSubheader>
+          }
+        >
+          {this.state.projects.map(({ _id, name }) => (
             <Link to={`/projects/${_id}`} key={_id}>
               <ListItem button>
                 <ListItemText primary={name} />
@@ -141,6 +180,7 @@ class ResponsiveDrawer extends React.Component {
     return (
       <div className={classes.root}>
         <CssBaseline />
+
         <AppBar position="fixed" className={classes.appBar}>
           <Toolbar>
             <IconButton
@@ -151,11 +191,13 @@ class ResponsiveDrawer extends React.Component {
             >
               <MenuIcon />
             </IconButton>
+
             <Typography variant="h6" color="inherit" noWrap>
               {title}
             </Typography>
           </Toolbar>
         </AppBar>
+
         <nav className={classes.drawer}>
           {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
           <Hidden smUp implementation="css">
@@ -172,6 +214,7 @@ class ResponsiveDrawer extends React.Component {
               {drawer}
             </Drawer>
           </Hidden>
+
           <Hidden xsDown implementation="css">
             <Drawer
               classes={{
@@ -187,6 +230,14 @@ class ResponsiveDrawer extends React.Component {
         <main className={classes.content}>
           <div className={classes.toolbar} />
           {children}
+
+          <ProjectFormDialog
+            open={this.state.projectDialogOpen}
+            handleClose={this.onCreateProject}
+            formProps={{
+              mode: 'create'
+            }}
+          />
         </main>
       </div>
     )
